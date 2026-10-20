@@ -2,7 +2,7 @@
 
 First-year creative coding project
 
-Browser platformer in p5.js with parallax, collision, and audio
+p5.js side-scrolling platformer with parallax scenery, scrolling world coordinates, canyons, brick platforms (factory objects), patrolling enemies (object constructors), coins, lives, flagpole win state, and a sound layer.
 
 ![Crab Canyon Run gameplay](assets/cc_screenshot_1.png)
 
@@ -17,7 +17,7 @@ Browser platformer in p5.js with parallax, collision, and audio
 
 ### Features
  
- Scrolling, canyon constraint, platforms, enemies, collectibles score, lives
+ Side-scrolling, canyon constraint, platforms, enemies, collectibles score, lives
 
 ### How to play
 
