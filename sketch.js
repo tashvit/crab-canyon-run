@@ -66,7 +66,8 @@ function preload()
 
 function setup()
 {
-	createCanvas(1024, 576);
+	var canvas = createCanvas(1024, 576);
+	canvas.parent('sketch-container');
 	frameRate(60);
 	startedPlaying = false;
 	lives = 3;

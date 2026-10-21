@@ -1,0 +1,19 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background-color: #EAF7FC;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#sketch-container {
+    display: flex;
+    margin: 0;
+    justify-content: center;
+    padding: 1rem;
+}

@@ -2,7 +2,7 @@
 
 First-year creative coding project
 
-p5.js side-scrolling platformer with parallax scenery, scrolling world coordinates, canyons, brick platforms (factory objects), patrolling enemies (object constructors), coins, lives, flagpole win state, and a sound layer.
+p5.js side-scrolling platformer with parallax scenery, scrolling world coordinates, canyons, brick platforms (factory objects), patrolling enemies, coins, lives, flagpole win state, and a sound layer.
 
 ![Crab Canyon Run gameplay](assets/cc_screenshot_1.png)
 
