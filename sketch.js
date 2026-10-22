@@ -1,3 +1,6 @@
+var canvas_width = 1024;
+var canvas_height = 576;
+
 var gameChar_x;
 var gameChar_y;
 var floorPos_y;
@@ -66,7 +69,7 @@ function preload()
 
 function setup()
 {
-	var canvas = createCanvas(1024, 576);
+	var canvas = createCanvas(canvas_width, canvas_height);
 	canvas.parent('sketch-container');
 	frameRate(60);
 	startedPlaying = false;
@@ -158,11 +161,14 @@ function draw()
 	// Draw game character.
 	drawGameChar();
 
+	// Draw collectable to show game score
+	drawCollectable({x_pos: 50, y_pos: 50, size: 1.8, isFound: false});
 	// Draw game score text on screen
 	fill(255);
 	noStroke();
+	textSize(30);
+	text("x " + game_score, 90, 60);
 	textSize(25);
-	text("Score: " + game_score, 25, 25);
 
 	// Draw life tokens for lives remaining
 	for (var i = 0; i < lives; i++)
