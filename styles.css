@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap');
+
 html, body {
     height: 100%;
     margin: 0;
@@ -16,4 +18,16 @@ body {
     margin: 0;
     justify-content: center;
     padding: 1rem;
+    border-radius: 80px;
+    overflow: hidden;
+}
+
+#game-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #ff2525;
+    letter-spacing: 2px;
 }
