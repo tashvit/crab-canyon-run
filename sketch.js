@@ -11,6 +11,7 @@ var isLeft;
 var isRight;
 var isFalling;
 var isPlummeting;
+var levelComplete;
 
 var grassWidths;
 var grassHeights;
@@ -37,6 +38,7 @@ var bubbleX;
 var caughtCanyon;
 
 var flagpole;
+var flag;
 var lives;
 
 var platforms;
@@ -189,7 +191,7 @@ function draw()
 	}
 
 	// Draw Level Complete screen
-	if (flagpole.isReached)
+	if (levelComplete)
 	{
 		drawLevelCompleteScreen();
 		if (!gameEndSoundPlayed)
@@ -266,10 +268,25 @@ function draw()
 	}
 
 
-	// Logic for checking flagpole
+	// Logic for checking flagpole	
 	if (!flagpole.isReached)
 	{
 		checkFlagpole();
+	}
+
+	if (flagpole.isReached)
+	{
+		if (flag.y_pos > flagpole.y_pos - flagpole.height) 
+			{
+				// Raise the flag if it is not raised
+				flag.y_pos -= 3;
+			}
+		else 
+			{
+				// Draw raised flag
+				flag.y_pos = flagpole.y_pos - flagpole.height;
+				levelComplete = true;
+			}
 	}
 
 	// Logic for counting player lives
@@ -944,16 +961,9 @@ function renderFlagpole()
 	push();
 	strokeWeight(5);
 	stroke(100);
-	line(flagpole.x_pos, floorPos_y, flagpole.x_pos, floorPos_y - 250);
-
-	if (flagpole.isReached)
-	{
-		drawFlag(flagpole.x_pos, floorPos_y - 250);
-	}
-	else
-	{
-		drawFlag(flagpole.x_pos, floorPos_y - 50);
-	}
+	line(flagpole.x_pos, flagpole.y_pos, 
+		flagpole.x_pos, flagpole.y_pos - flagpole.height);
+	drawFlag(flag.x_pos, flag.y_pos);
 	pop();
 }
 
@@ -1400,6 +1410,7 @@ function startGame()
 	isRight = false;
 	isFalling = false;
 	isPlummeting = false;
+	levelComplete = false;
 
 	// Initialise array - trees.
 	trees_x = [400, 1400, 1550, 1700, 2500, 3100, 3250, 3975,
@@ -1561,6 +1572,7 @@ function startGame()
 	enemies.push(new Enemy(5650, floorPos_y - 180, 100));
 
 	game_score = 0;
-	flagpole = {isReached: false, x_pos: 6800};
+	flagpole = {isReached: false, x_pos: 6800, y_pos: floorPos_y, height: 250};
+	flag = {x_pos: flagpole.x_pos, y_pos: flagpole.y_pos - 50};
 }
 
