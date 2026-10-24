@@ -164,12 +164,12 @@ function draw()
 	drawGameChar();
 
 	// Draw collectable to show game score
-	drawCollectable({x_pos: 50, y_pos: 50, size: 1.8, isFound: false});
+	drawCollectable({x_pos: 50, y_pos: 50, size: 1.2, isFound: false});
 	// Draw game score text on screen
 	fill(255);
 	noStroke();
-	textSize(30);
-	text("x " + game_score, 90, 60);
+	textSize(25);
+	text("x " + game_score, 80, 60);
 	textSize(25);
 
 	// Draw life tokens for lives remaining
@@ -958,11 +958,17 @@ function checkCanyon(t_canyon)
 
 function renderFlagpole()
 {
+	// Draw flagpole
 	push();
 	strokeWeight(5);
 	stroke(100);
 	line(flagpole.x_pos, flagpole.y_pos, 
 		flagpole.x_pos, flagpole.y_pos - flagpole.height);
+	// Draw flagpole top
+	noStroke();
+	fill(100);
+	ellipse(flagpole.x_pos, flagpole.y_pos - flagpole.height, 10, 10);
+	// Draw flag
 	drawFlag(flag.x_pos, flag.y_pos);
 	pop();
 }
@@ -980,19 +986,35 @@ function checkFlagpole()
 
 function drawFlag(x, y)
 {
-	fill(255, 79, 135);
-	noStroke();
-	rect(x, y, 50, 50);
-	// heart drawings
-	fill(200, 20, 80);
-	ellipse(x + 11, y + 10, 15);
-	ellipse(x + 24, y + 10, 15);
-	triangle(x + 4, y + 14, x + 30, y + 15, x + 18, y + 26);
-	fill(60, 60, 240);
-	ellipse(x + 27, y + 30, 15);
-	ellipse(x + 40, y + 30, 15);
-	triangle(x + 20, y + 34, x + 46, y + 35, x + 34, y + 46);
+    strokeWeight(3);
+	stroke(240, 181, 92);
+	fill(238, 221, 96);
+  
+    // Pennant shape
+	beginShape();
+    vertex(x, y);
+    vertex(x + 70, y + 2);
+    vertex(x + 55, y + 25);
+    vertex(x + 71, y + 49);
+    vertex(x, y + 50);
+    endShape(CLOSE);
+
+    // Circle shape
+    strokeWeight(0.5);
+    stroke(255, 79, 135);
+    fill(255);
+    ellipse(x + 30, y + 25, 35, 35);
+    noStroke();
+  
+	// Heart drawing
+    fill(255, 79, 135);
+	ellipse(x + 27 - 4, y + 30 - 7, 15);
+	ellipse(x + 40 - 4, y + 30 - 7, 15);
+	triangle(x + 20 - 4, y + 34 - 7, 
+             x + 46 - 4, y + 35 - 7, 
+             x + 34 - 4, y + 46 - 7);
 }
+
 
 
 // ---------------------------------
