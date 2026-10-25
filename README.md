@@ -42,7 +42,7 @@ p5.js, p5.sound, JS
 - Background Music:
 	* levelcomplete.wav - Sound from plasterbrain from Freesound.org
 	* gameoversound.wav - Create by Mativve from Freesound.org
-	* Other audio was made using royalty free sound loops.
+	* Some audio was made using royalty free sound loops.
 	* Royalty free audio loops from 
 		* https://www.humblebundle.com/software/mega-sound-designer-loop-crate-vol-2-software
 	* Software Used : Audacity (freeware), Mixcraft 8 Home Studio (from humblebundle.com)
@@ -50,3 +50,9 @@ p5.js, p5.sound, JS
 - Sound effects for actions:
 	* This was generated using sfxr software (http://www.drpetter.se/project_sfxr.html, freeware).
 	* Soundfile for JumpSound was taken from coursework.
+
+- Sound effects for fireworks:
+	* Sound Effect by <a href="https://pixabay.com/users/dragon-studio-38165424/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=419026">DRAGON-STUDIO</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=419026">Pixabay</a>
+
+- Code for fireworks from:
+	* Daniel Shiffman https://editor.p5js.org/codingtrain/sketches/O2M0SO-WO

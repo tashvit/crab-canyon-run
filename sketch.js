@@ -47,9 +47,12 @@ var enemies;
 var game_score;
 var startedPlaying;
 
+var fireworks = [];
+var fireworksEndedCount = 0;
+var gravity;
 
-function preload()
-{
+
+function preload() {
 	soundFormats('wav');
 	// Load sounds and set volume
 	jumpSound = loadSound('assets/jump.wav');
@@ -69,20 +72,20 @@ function preload()
 }
 
 
-function setup()
-{
+function setup() {
 	var canvas = createCanvas(canvas_width, canvas_height);
 	canvas.parent('sketch-container');
 	frameRate(60);
 	startedPlaying = false;
 	lives = 3;
 	gameEndSoundPlayed = false;
+	gravity = createVector(0, 0.2);
 	startGame();
 }
 
 
-function draw()
-{
+function draw() {
+	colorMode(RGB);
 	// Fill the sky blue
 	background(100, 192, 241);
 	noStroke();
@@ -112,44 +115,37 @@ function draw()
 	drawTrees();
 
 	// Draw platforms
-	for (var i = 0; i < platforms.length; i++)
-	{
+	for (var i = 0; i < platforms.length; i++) {
 		platforms[i].draw();
 	}
 
 	// Draw collectable items.
-	for (var i = 0; i < collectables.length; i++)
-	{
-		if (!collectables[i].isFound)
-		{
+	for (var i = 0; i < collectables.length; i++) {
+		if (!collectables[i].isFound) {
 			drawCollectable(collectables[i]);
 			checkCollectable(collectables[i]);
 		}
 	}
 
 	// Draw canyons.
-	for (var i = 0; i < canyons.length; i++)
-	{
+	for (var i = 0; i < canyons.length; i++) {
 		drawCanyon(canyons[i]);
 		checkCanyon(canyons[i]);
 	}
 
 	// Draw flagpole
 	renderFlagpole();
-	
+
 	// Draw enemies
-	for (var i = 0; i < enemies.length; i++)
-	{
+	for (var i = 0; i < enemies.length; i++) {
 		enemies[i].draw();
-		
+
 		var isEnemyContact = enemies[i].checkEnemyContact(
 			gameChar_world_x, gameChar_y
 		);
-		
-		if (isEnemyContact)
-		{
-			if (lives > 0)
-			{
+
+		if (isEnemyContact) {
+			if (lives > 0) {
 				hitEnemySound.play();
 				lives -= 1;
 				startGame();
@@ -164,7 +160,7 @@ function draw()
 	drawGameChar();
 
 	// Draw collectable to show game score
-	drawCollectable({x_pos: 50, y_pos: 50, size: 1.2, isFound: false});
+	drawCollectable({ x_pos: 50, y_pos: 50, size: 1.2, isFound: false });
 	// Draw game score text on screen
 	fill(255);
 	noStroke();
@@ -173,120 +169,115 @@ function draw()
 	textSize(25);
 
 	// Draw life tokens for lives remaining
-	for (var i = 0; i < lives; i++)
-	{
+	for (var i = 0; i < lives; i++) {
 		drawLifeTokens(i * 50 + 850, 80);
 	}
 
 	// Draw Game Over screen
-	if (lives < 1)
-	{
+	if (lives < 1) {
 		drawGameOverScreen();
-		if (!gameEndSoundPlayed)
-		{
+		if (!gameEndSoundPlayed) {
 			backgroundMusic.stop();
 			gameOverSound.play();
 			gameEndSoundPlayed = true;
 		}
 	}
 
-	// Draw Level Complete screen
-	if (levelComplete)
-	{
+	// Draw Level Complete screen after 8 fireworks
+	if (levelComplete && fireworksEndedCount >= 8) {
 		drawLevelCompleteScreen();
-		if (!gameEndSoundPlayed)
-		{
+		if (!gameEndSoundPlayed) {
 			backgroundMusic.stop();
 			levelCompletedSound.play();
 			gameEndSoundPlayed = true;
 		}
 	}
 
+	// Draw fireworks
+	if (levelComplete) {
+		// Create new firework if random number is less than 0.04
+		if (random(1) < 0.04) {
+			fireworks.push(new Firework());
+		}
+
+		for (let i = fireworks.length - 1; i >= 0; i--) {
+			fireworks[i].update();
+			fireworks[i].show();
+
+			if (fireworks[i].done()) {
+				fireworks.splice(i, 1);
+				fireworksEndedCount++;
+			}
+		}
+	}
+
 	// Draw start up screen
-	if (!startedPlaying)
-	{
+	if (!startedPlaying) {
 		drawStartupScreen();
 	}
 
 	// Logic to make the game character move or the background scroll.
-	if (isLeft)
-	{
-		if (gameChar_x > width * 0.2)
-		{
+	if (isLeft) {
+		if (gameChar_x > width * 0.2) {
 			gameChar_x -= 5;
 		}
-		else
-		{
+		else {
 			scrollPos += 5;
 		}
 	}
 
-	if (isRight)
-	{
-		if (gameChar_x < width * 0.8)
-		{
-			gameChar_x  += 5;
+	if (isRight) {
+		if (gameChar_x < width * 0.8) {
+			gameChar_x += 5;
 		}
-		else
-		{
+		else {
 			scrollPos -= 5; // Negative for moving against the background
 		}
 	}
 
 	// Logic to make the game character rise and fall.
 	// Adding gravity
-	if (gameChar_y < floorPos_y)
-	{
+	if (gameChar_y < floorPos_y) {
 		var isContact = false;
-		for (var i = 0; i < platforms.length; i++)
-		{
-			if (platforms[i].checkContact(gameChar_world_x, gameChar_y))
-			{
+		for (var i = 0; i < platforms.length; i++) {
+			if (platforms[i].checkContact(gameChar_world_x, gameChar_y)) {
 				isContact = true;
 				break;
 			}
 		}
-		if (!isContact)
-		{
+		if (!isContact) {
 			isFalling = true;
 			gameChar_y += 2;
 		}
-		else 
-		{
+		else {
 			isPlummeting = false;
 			isFalling = false;
 		}
-	}	
-	else
-	{
+	}
+	else {
 		isFalling = false;
 	}
 
-	if (isPlummeting)
-	{
+	if (isPlummeting) {
 		gameChar_y += 4;
 	}
 
 
 	// Logic for checking flagpole	
-	if (!flagpole.isReached)
-	{
+	if (!flagpole.isReached) {
 		checkFlagpole();
 	}
 
-	if (flagpole.isReached)
-	{
-		if (flag.y_pos > flagpole.y_pos - flagpole.height) 
-			{
-				// Raise the flag if it is not raised
-				flag.y_pos -= 3;
-			}
-		else 
-			{
-				// Draw raised flag
-				flag.y_pos = flagpole.y_pos - flagpole.height;
-				levelComplete = true;
-			}
+	if (flagpole.isReached) {
+		if (flag.y_pos > flagpole.y_pos - flagpole.height) {
+			// Raise the flag if it is not raised
+			flag.y_pos -= 3;
+		}
+		else {
+			// Draw raised flag
+			flag.y_pos = flagpole.y_pos - flagpole.height;
+			levelComplete = true;
+		}
 	}
 
 	// Logic for counting player lives
@@ -294,11 +285,10 @@ function draw()
 
 	// Update real position of gameChar for collision detection.
 	gameChar_world_x = gameChar_x - scrollPos;
-	
+
 	// If Plummeting, change game char X to be constrained inside canyon
 	// This ensures character falls inside canyon
-	if (isPlummeting)
-	{
+	if (isPlummeting) {
 		// Constrain world position inside canyon
 		var constrainedGameWorldX = constrain(gameChar_world_x,
 			caughtCanyon.x_pos + 30, caughtCanyon.x_pos + caughtCanyon.width - 30);
@@ -315,13 +305,10 @@ function draw()
 // Key control functions
 // ---------------------
 
-function keyPressed()
-{
-	if (!startedPlaying)
-	{
+function keyPressed() {
+	if (!startedPlaying) {
 		// Set background music
-		if (!backgroundMusic.isPlaying())
-		{
+		if (!backgroundMusic.isPlaying()) {
 			backgroundMusic.loop();
 		}
 		startedPlaying = true;
@@ -329,13 +316,11 @@ function keyPressed()
 	}
 
 	// Reload the game
-	if ((lives < 1 || flagpole.isReached) && key == ' ')
-	{
+	if ((lives < 1 || flagpole.isReached) && key == ' ') {
 		lives = 3;
 		gameEndSoundPlayed = false;
 		startedPlaying = false;
-		if (!backgroundMusic.isPlaying())
-		{
+		if (!backgroundMusic.isPlaying()) {
 			backgroundMusic.loop();
 		}
 		startGame();
@@ -343,25 +328,20 @@ function keyPressed()
 	}
 
 	// Ignore key presses when the character is plummeting or game over
-	if (isPlummeting || lives < 1 || flagpole.isReached)
-	{
+	if (isPlummeting || lives < 1 || flagpole.isReached) {
 		return;
 	}
 
-	if (key == 'a' || keyCode == 37)
-	{
+	if (key == 'a' || keyCode == 37) {
 		isLeft = true;
 	}
 
-	if (key == 'd' || keyCode == 39)
-	{
+	if (key == 'd' || keyCode == 39) {
 		isRight = true;
 	}
 
-	if (key == ' ' || key == "w")
-	{
-		if (!isFalling)
-		{
+	if (key == ' ' || key == "w") {
+		if (!isFalling) {
 			gameChar_y -= 100;
 			jumpSound.play();
 		}
@@ -369,15 +349,12 @@ function keyPressed()
 }
 
 
-function keyReleased()
-{
-	if (key == 'a' || keyCode == 37)
-	{
+function keyReleased() {
+	if (key == 'a' || keyCode == 37) {
 		isLeft = false;
 	}
 
-	if (key == 'd' || keyCode == 39)
-	{
+	if (key == 'd' || keyCode == 39) {
 		isRight = false;
 	}
 }
@@ -388,11 +365,9 @@ function keyReleased()
 // ------------------------------
 
 // Function to draw the game character.
-function drawGameChar()
-{
+function drawGameChar() {
 	// Draw game character
-	if (isLeft && isFalling)
-	{
+	if (isLeft && isFalling) {
 		// Add your jumping-left code
 		// Right ear
 		fill(57, 63, 71);
@@ -416,8 +391,7 @@ function drawGameChar()
 			gameChar_x + 18, gameChar_y - 19,
 			gameChar_x + 22, gameChar_y - 22);
 	}
-	else if (isRight && isFalling)
-	{
+	else if (isRight && isFalling) {
 		// Add your jumping-right code
 		// Left ear
 		fill(57, 63, 71);
@@ -441,8 +415,7 @@ function drawGameChar()
 			gameChar_x - 18, gameChar_y - 19,
 			gameChar_x - 22, gameChar_y - 22);
 	}
-	else if (isLeft)
-	{
+	else if (isLeft) {
 		// Add your walking left code
 		// Right ear
 		fill(57, 63, 71);
@@ -466,8 +439,7 @@ function drawGameChar()
 			gameChar_x + 18, gameChar_y - 35,
 			gameChar_x + 20, gameChar_y - 30);
 	}
-	else if (isRight)
-	{
+	else if (isRight) {
 		// Add your walking right code
 		// Left ear
 		fill(57, 63, 71);
@@ -491,8 +463,7 @@ function drawGameChar()
 			gameChar_x - 18, gameChar_y - 35,
 			gameChar_x - 20, gameChar_y - 30);
 	}
-	else if (isFalling || isPlummeting)
-	{
+	else if (isFalling || isPlummeting) {
 		// Add your jumping facing forwards code
 		// Ears
 		fill(0);
@@ -519,8 +490,7 @@ function drawGameChar()
 		fill(0);
 		ellipse(gameChar_x, gameChar_y - 20, 4, 4);
 	}
-	else
-	{
+	else {
 		// Add your standing front facing code
 		drawFrontFacingChar(gameChar_x, gameChar_y);
 	}
@@ -528,8 +498,7 @@ function drawGameChar()
 
 
 // Function to draw standing front facing character
-function drawFrontFacingChar(charXPos, charYPos)
-{
+function drawFrontFacingChar(charXPos, charYPos) {
 	// Ears
 	fill(0);
 	ellipse(charXPos - 8, charYPos - 35, 8, 20);
@@ -562,8 +531,7 @@ function drawFrontFacingChar(charXPos, charYPos)
 // ---------------------------
 
 // Function to draw ground
-function drawGround()
-{
+function drawGround() {
 	// Coffee brown ground
 	fill(199, 166, 121);
 	rect(0, floorPos_y + 5, width, height / 4);
@@ -578,8 +546,7 @@ function drawGround()
 
 
 // Function to draw grass
-function drawGrass()
-{
+function drawGrass() {
 	// Draw grass
 	var grassWidthRemainder = flagpole.x_pos + 500; // Bigger value than flagpole
 	var grassCurrentX = 0;
@@ -588,8 +555,7 @@ function drawGrass()
 	// Modulus operator was used to map grass count (n) to a suitable height and width
 	var grassWidth = grassWidths[n % grassWidths.length];
 	var grassHeight;
-	while (grassWidthRemainder > 0)
-	{
+	while (grassWidthRemainder > 0) {
 		fill(0, 255, 0);
 		grassHeight = grassHeights[n % grassHeights.length];
 		triangle(grassCurrentX, floorPos_y + 5,
@@ -608,8 +574,7 @@ function drawGrass()
 // ---------------------------------
 
 // Function to draw a single cloud
-function drawSingleCloud(cloudX, cloudY, cloudSize)
-{
+function drawSingleCloud(cloudX, cloudY, cloudSize) {
 	fill(192, 192, 192);
 	push();
 	translate(cloudX, cloudY);
@@ -626,19 +591,15 @@ function drawSingleCloud(cloudX, cloudY, cloudSize)
 
 
 // Function to draw cloud objects.
-function drawClouds()
-{
-	for (var i = 0; i < clouds.length; i++)
-	{
+function drawClouds() {
+	for (var i = 0; i < clouds.length; i++) {
 		// Cloud - translate function has been used here to scale cloud
 		var n = Math.floor(frameCount * 0.5) % 7900;
 		var cloudXPos = clouds[i].x_pos + (n * clouds[i].speed);
-		if (cloudXPos < -500)
-		{
+		if (cloudXPos < -500) {
 			cloudXPos = 7200 + cloudXPos;
 		}
-		else if (cloudXPos > 7200)
-		{
+		else if (cloudXPos > 7200) {
 			cloudXPos = cloudXPos - 7200 - 520;
 		}
 		drawSingleCloud(cloudXPos, clouds[i].y_pos, clouds[i].size);
@@ -651,8 +612,7 @@ function drawClouds()
 // ---------------------------------
 
 // Function to draw a single back mountain
-function drawSingleBackMountain(mtX, mtY, mtScale)
-{
+function drawSingleBackMountain(mtX, mtY, mtScale) {
 	fill(103, 115, 131);
 	push();
 	translate(mtX, mtY);
@@ -695,8 +655,7 @@ function drawSingleBackMountain(mtX, mtY, mtScale)
 
 
 // Function to draw a single middle mountain
-function drawSingleMiddleMountain(mtX, mtY, mtScale)
-{
+function drawSingleMiddleMountain(mtX, mtY, mtScale) {
 	fill(148, 114, 96);
 	push();
 	translate(mtX, mtY);
@@ -725,8 +684,7 @@ function drawSingleMiddleMountain(mtX, mtY, mtScale)
 
 
 // Function to draw a single front mountain
-function drawSingleFrontMountain(mtX, mtY, mtScale)
-{
+function drawSingleFrontMountain(mtX, mtY, mtScale) {
 	fill(152, 237, 196);
 	push();
 	translate(mtX, mtY);
@@ -773,34 +731,28 @@ function drawSingleFrontMountain(mtX, mtY, mtScale)
 
 
 // Function to draw all back mountains
-function drawBackMountains()
-{
-	for (var i = 0; i < backMountains.length; i++)
-	{
+function drawBackMountains() {
+	for (var i = 0; i < backMountains.length; i++) {
 		drawSingleBackMountain(backMountains[i].x_pos, backMountains[i].y_pos,
-		backMountains[i].size);
+			backMountains[i].size);
 	}
 }
 
 
 // Function to draw all middle brown mountains
-function drawMiddleMountains()
-{
-	for (var i = 0; i < middleMountains.length; i++)
-	{
+function drawMiddleMountains() {
+	for (var i = 0; i < middleMountains.length; i++) {
 		drawSingleMiddleMountain(middleMountains[i].x_pos, middleMountains[i].y_pos,
-		middleMountains[i].size);
+			middleMountains[i].size);
 	}
 }
 
 
 // Function to draw all front mountains
-function drawFrontMountains()
-{
-	for (var i = 0; i < frontMountains.length; i++)
-	{
+function drawFrontMountains() {
+	for (var i = 0; i < frontMountains.length; i++) {
 		drawSingleFrontMountain(frontMountains[i].x_pos, frontMountains[i].y_pos,
-		frontMountains[i].size);
+			frontMountains[i].size);
 	}
 }
 
@@ -810,14 +762,12 @@ function drawFrontMountains()
 // ---------------------------------
 
 // Function to draw a flower
-function drawFlower(flowerX, flowerY, scaleVal)
-{
+function drawFlower(flowerX, flowerY, scaleVal) {
 	push();
 	translate(flowerX, flowerY);
 	scale(scaleVal);
 	noStroke();
-	for (let f = 0; f < 10; f ++)
-	{
+	for (let f = 0; f < 10; f++) {
 		ellipse(0, 30, 20, 80);
 		rotate(PI / 5);
 	}
@@ -826,8 +776,7 @@ function drawFlower(flowerX, flowerY, scaleVal)
 
 
 // Function to draw a single tree
-function drawSingleTree(treeX)
-{
+function drawSingleTree(treeX) {
 	// Tree trunk
 	fill(118, 42, 29);
 	rect(treeX - 10, 340, 30, 92);
@@ -835,18 +784,18 @@ function drawSingleTree(treeX)
 	fill(229, 26, 56);
 	beginShape();
 	bezier(treeX - 20, 340,
-	treeX - 120, 440,
-	treeX + 135, 440,
-	treeX + 35, 340);
+		treeX - 120, 440,
+		treeX + 135, 440,
+		treeX + 35, 340);
 	endShape();
 	// Tree top layer
 	fill(250, 98, 123);
 	ellipse(treeX + 7.5, 342, 53, 20);
 	beginShape();
 	bezier(treeX - 20, 340,
-	treeX - 100, 420,
-	treeX + 115, 420,
-	treeX + 35, 340);
+		treeX - 100, 420,
+		treeX + 115, 420,
+		treeX + 35, 340);
 	endShape();
 	// Flower 1
 	fill(238, 221, 96);
@@ -870,10 +819,8 @@ function drawSingleTree(treeX)
 
 
 // Function to draw all trees
-function drawTrees()
-{
-	for (var i = 0; i < trees_x.length; i++)
-	{
+function drawTrees() {
+	for (var i = 0; i < trees_x.length; i++) {
 		drawSingleTree(trees_x[i]);
 	}
 }
@@ -884,8 +831,7 @@ function drawTrees()
 // ---------------------------------
 
 // Function to draw canyon objects.
-function drawCanyon(t_canyon)
-{
+function drawCanyon(t_canyon) {
 	// Alpha values of moving sections of waterfall
 	var shades = [70, 50, 40, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	// Base rectangles of waterfall
@@ -900,11 +846,9 @@ function drawCanyon(t_canyon)
 	var j = Math.floor((frameCount % 100) / 5);
 
 	// Drawing sections of the waterfall
-	for (var i = 0; i < floorPos_y; i += sectionSize)
-	{
+	for (var i = 0; i < floorPos_y; i += sectionSize) {
 		j--; // Makes the white section appear to move down the waterfall
-		if (j < 0)
-		{
+		if (j < 0) {
 			j = shades.length - 1;
 		}
 		var opacity = shades[j % shades.length];
@@ -923,8 +867,7 @@ function drawCanyon(t_canyon)
 	var everyTenFrames = Math.floor(frameCount / 10);
 
 	// Draw bubbles - bubble count depends on width of canyon
-	for (var bubble = 0; bubble < t_canyon.width / 6; bubble++)
-	{
+	for (var bubble = 0; bubble < t_canyon.width / 6; bubble++) {
 		var random1 = bubbleX[(everyTenFrames + bubble) % bubbleX.length];
 		var random2 = bubbleY[(everyTenFrames + bubble) % bubbleY.length];
 		var randomSize = bubbleSize[(everyTenFrames + bubble) % bubbleSize.length];
@@ -938,13 +881,11 @@ function drawCanyon(t_canyon)
 
 
 // Function to check if character is over a canyon.
-function checkCanyon(t_canyon)
-{
+function checkCanyon(t_canyon) {
 	// Plummeting
 	if ((gameChar_world_x > t_canyon.x_pos)
 		&& (gameChar_world_x < t_canyon.x_pos + t_canyon.width)
-		&& (gameChar_y >= floorPos_y))
-	{
+		&& (gameChar_y >= floorPos_y)) {
 		isPlummeting = true;
 		// caughtCanyon is used to constrain the plummeting x position
 		caughtCanyon = t_canyon;
@@ -956,13 +897,12 @@ function checkCanyon(t_canyon)
 // Functions for drawing, rendering and checking flagpole
 // ---------------------------------
 
-function renderFlagpole()
-{
+function renderFlagpole() {
 	// Draw flagpole
 	push();
 	strokeWeight(5);
 	stroke(100);
-	line(flagpole.x_pos, flagpole.y_pos, 
+	line(flagpole.x_pos, flagpole.y_pos,
 		flagpole.x_pos, flagpole.y_pos - flagpole.height);
 	// Draw flagpole top
 	noStroke();
@@ -974,45 +914,42 @@ function renderFlagpole()
 }
 
 
-function checkFlagpole()
-{
+function checkFlagpole() {
 	var d = abs(gameChar_world_x - flagpole.x_pos);
-	if (d < 15)
-	{
+	if (d < 15) {
 		flagpole.isReached = true;
 	}
 }
 
 
-function drawFlag(x, y)
-{
-    strokeWeight(3);
+function drawFlag(x, y) {
+	strokeWeight(3);
 	stroke(240, 181, 92);
 	fill(238, 221, 96);
-  
-    // Pennant shape
-	beginShape();
-    vertex(x, y);
-    vertex(x + 70, y + 2);
-    vertex(x + 55, y + 25);
-    vertex(x + 71, y + 49);
-    vertex(x, y + 50);
-    endShape(CLOSE);
 
-    // Circle shape
-    strokeWeight(0.5);
-    stroke(255, 79, 135);
-    fill(255);
-    ellipse(x + 30, y + 25, 35, 35);
-    noStroke();
-  
+	// Pennant shape
+	beginShape();
+	vertex(x, y);
+	vertex(x + 70, y + 2);
+	vertex(x + 55, y + 25);
+	vertex(x + 71, y + 49);
+	vertex(x, y + 50);
+	endShape(CLOSE);
+
+	// Circle shape
+	strokeWeight(0.5);
+	stroke(255, 79, 135);
+	fill(255);
+	ellipse(x + 30, y + 25, 35, 35);
+	noStroke();
+
 	// Heart drawing
-    fill(255, 79, 135);
+	fill(255, 79, 135);
 	ellipse(x + 27 - 4, y + 30 - 7, 15);
 	ellipse(x + 40 - 4, y + 30 - 7, 15);
-	triangle(x + 20 - 4, y + 34 - 7, 
-             x + 46 - 4, y + 35 - 7, 
-             x + 34 - 4, y + 46 - 7);
+	triangle(x + 20 - 4, y + 34 - 7,
+		x + 46 - 4, y + 35 - 7,
+		x + 34 - 4, y + 46 - 7);
 }
 
 
@@ -1022,23 +959,18 @@ function drawFlag(x, y)
 // ---------------------------------
 
 // Function to create platforms
-function createPlatforms(x, y, length)
-{
+function createPlatforms(x, y, length) {
 	var platformObject = {
 		x: x,
 		y: y,
 		length: length,
-		draw: function() 
-		{
+		draw: function () {
 			drawPlatform(this.x, this.y, this.length);
 		},
-		checkContact: function(gc_x, gc_y)
-		{
-			if (gc_x > this.x && gc_x < this.x + this.length)
-			{
+		checkContact: function (gc_x, gc_y) {
+			if (gc_x > this.x && gc_x < this.x + this.length) {
 				var d = this.y - gc_y;
-				if (d == 0)
-				{
+				if (d == 0) {
 					return true;
 				}
 			}
@@ -1050,8 +982,7 @@ function createPlatforms(x, y, length)
 
 
 // Function to draw platforms
-function drawPlatform(platform_x, platform_y, platform_length)
-{
+function drawPlatform(platform_x, platform_y, platform_length) {
 	fill(162, 66, 0);
 	rect(platform_x, platform_y, platform_length, 30);
 	var internalPlatformLength = platform_length - 10;
@@ -1059,26 +990,21 @@ function drawPlatform(platform_x, platform_y, platform_length)
 	var brickSize = 25;
 	// Function parseInt was used to convert the number of boxes to a usable integer
 	var boxes = Math.ceil(internalPlatformLength / brickSize);
-	for (var i = 0; i < boxes; i++)
-	{
+	for (var i = 0; i < boxes; i++) {
 		// 2 different coloured bricks
-		if (i % 2 == 0)
-		{
+		if (i % 2 == 0) {
 			fill(194, 147, 85);
 		}
-		else
-		{
+		else {
 			fill(212, 175, 88);
 		}
 		// The last brick is of a different length
 		// So bricks for a platform of any size can be created
-		if (i == boxes - 1) 
-		{ // Checks if this is the last brick
+		if (i == boxes - 1) { // Checks if this is the last brick
 			var finalBrickWidth = internalPlatformLength - (i * brickSize);
 			rect(platform_x + 5 + (i * brickSize), platform_y + 5, finalBrickWidth, 20);
 		}
-		else
-		{
+		else {
 			rect(platform_x + 5 + (i * brickSize), platform_y + 5, brickSize, 20);
 		}
 	}
@@ -1090,36 +1016,30 @@ function drawPlatform(platform_x, platform_y, platform_length)
 // ---------------------------------
 
 // Function to create enemies
-function Enemy(x, y, range)
-{
+function Enemy(x, y, range) {
 	this.x = x;
 	this.y = y;
 	this.range = range;
 	this.currentX = x;
 	this.incrementor = 1;
 
-	this.update = function()
-	{
+	this.update = function () {
 		this.currentX += this.incrementor;
-		
-		if (this.currentX >= this.x + this.range)
-		{
+
+		if (this.currentX >= this.x + this.range) {
 			this.incrementor = -1;
 		}
-		else if (this.currentX < this.x)
-		{
+		else if (this.currentX < this.x) {
 			this.incrementor = 1;
 		}
 	}
 
-	this.draw = function()
-	{
+	this.draw = function () {
 		this.update();
 		drawEnemy(this.x, this.currentX, this.y - 4, this.range);
 	}
 
-	this.checkEnemyContact = function(gc_x, gc_y)
-	{
+	this.checkEnemyContact = function (gc_x, gc_y) {
 		// Compare distance between game character and enemy
 		var d = dist(gc_x, gc_y - 10, this.currentX + 10, this.y);
 		return (d < 44);
@@ -1128,24 +1048,21 @@ function Enemy(x, y, range)
 
 
 // Function to draw enemy
-function drawEnemy(enemyStartX, enemyX, enemyY, enemyRange)
-{
+function drawEnemy(enemyStartX, enemyX, enemyY, enemyRange) {
 	// Distance travelled by enemy from its start position
 	var enemy_dist = enemyX - enemyStartX;
 	// Dividing distance travelled by enemy into blocks
 	var block_num = Math.ceil(enemy_dist / 20);
 
 	// Animating legs with if statement
-	if (block_num % 2 == 0 && block_num != 0)
-	{
+	if (block_num % 2 == 0 && block_num != 0) {
 		// Left leg
 		fill(255, 190, 0);
 		ellipse(enemyX + 5, enemyY, 5, 10);
 		// Right leg
 		ellipse(enemyX + 15, enemyY, 5, 10);
 	}
-	else
-	{
+	else {
 		// Left leg
 		fill(255, 190, 0);
 		ellipse(enemyX, enemyY, 5, 10);
@@ -1154,15 +1071,13 @@ function drawEnemy(enemyStartX, enemyX, enemyY, enemyRange)
 	}
 
 	// Animating claws with if statement
-	if (block_num % 2 == 0 && block_num != 0)
-	{
+	if (block_num % 2 == 0 && block_num != 0) {
 		// Left claw
 		ellipse(enemyX - 5, enemyY - 25, 15, 15);
 		// Right claw
 		ellipse(enemyX + 25, enemyY - 25, 15, 15);
 	}
-	else
-	{
+	else {
 		// Left claw
 		arc(enemyX - 5, enemyY - 25, 20, 20, 0 - QUARTER_PI, PI, PIE);
 		// Right claw
@@ -1189,8 +1104,7 @@ function drawEnemy(enemyStartX, enemyX, enemyY, enemyRange)
 // Collectable items render and check functions
 // ----------------------------------
 
-function drawCollectable(t_collectable)
-{
+function drawCollectable(t_collectable) {
 	strokeWeight(3);
 	stroke(240, 181, 92);
 	fill(255);
@@ -1207,11 +1121,9 @@ function drawCollectable(t_collectable)
 
 
 // Function to check character has collected an item.
-function checkCollectable(t_collectable)
-{
+function checkCollectable(t_collectable) {
 	// Make coin disappear on contact
-	if (dist(gameChar_world_x, gameChar_y - 18, t_collectable.x_pos, t_collectable.y_pos) < 38)
-	{
+	if (dist(gameChar_world_x, gameChar_y - 18, t_collectable.x_pos, t_collectable.y_pos) < 38) {
 		t_collectable.isFound = true;
 		coinSound.play();
 		game_score += 1;
@@ -1224,8 +1136,7 @@ function checkCollectable(t_collectable)
 // ---------------------------------
 
 // Function to draw life tokens
-function drawLifeTokens(x, y)
-{
+function drawLifeTokens(x, y) {
 	drawFrontFacingChar(x, y);
 	// Token heart
 	fill(255, 79, 135);
@@ -1236,10 +1147,8 @@ function drawLifeTokens(x, y)
 
 
 // Function to check character death
-function checkPlayerDie()
-{
-	if ((gameChar_y - 55 > height) && (lives >= 1))
-	{
+function checkPlayerDie() {
+	if ((gameChar_y - 55 > height) && (lives >= 1)) {
 		fallingSound.play();
 		lives -= 1;
 		startGame();
@@ -1252,8 +1161,7 @@ function checkPlayerDie()
 // Used for game startup, game over and level completed screens
 // ---------------------------------
 
-function drawGamePoster()
-{
+function drawGamePoster() {
 	// Drawing game poster
 	drawPosterBackground();
 	// Drawing mountains for poster
@@ -1282,8 +1190,7 @@ function drawGamePoster()
 
 
 // Function to draw poster background
-function drawPosterBackground()
-{
+function drawPosterBackground() {
 	// Black filter
 	fill(0, 0, 0, 180);
 	rect(0, 0, width, height);
@@ -1297,8 +1204,7 @@ function drawPosterBackground()
 
 
 // Function to draw character for poster
-function drawPosterCharacter()
-{
+function drawPosterCharacter() {
 	push();
 	translate(500, 390);
 	scale(4);
@@ -1308,8 +1214,7 @@ function drawPosterCharacter()
 
 
 // Function to draw ground for poster
-function drawPosterGround()
-{
+function drawPosterGround() {
 	fill(199, 166, 121);
 	rect(205, 400, 615, 122);
 	fill(0, 255, 0);
@@ -1318,8 +1223,7 @@ function drawPosterGround()
 
 
 // Function to draw trees for poster
-function drawPosterTrees()
-{
+function drawPosterTrees() {
 	push();
 	translate(260, -80);
 	scale(1.1);
@@ -1332,26 +1236,23 @@ function drawPosterTrees()
 
 
 // Function to draw collectables for poster
-function drawPosterCollectables()
-{
+function drawPosterCollectables() {
 	// Initiating poster collectables
 	var posterCollectables =
 		[
-			{x_pos: 660, y_pos: 265, size: 1.2, isFound: false},
-			{x_pos: 720, y_pos: 235, size: 1.6, isFound: false},
-			{x_pos: 780, y_pos: 265, size: 1.2, isFound: false},
+			{ x_pos: 660, y_pos: 265, size: 1.2, isFound: false },
+			{ x_pos: 720, y_pos: 235, size: 1.6, isFound: false },
+			{ x_pos: 780, y_pos: 265, size: 1.2, isFound: false },
 		];
 	// Draw poster collectable items
-	for (var i = 0; i < posterCollectables.length; i++)
-	{
+	for (var i = 0; i < posterCollectables.length; i++) {
 		drawCollectable(posterCollectables[i]);
 	}
 }
 
 
 // Function to draw canyon for poster
-function drawPosterCanyon()
-{
+function drawPosterCanyon() {
 	fill(156, 242, 255);
 	rect(645, 395, 150, 127);
 	fill(32, 150, 206, 20);
@@ -1363,24 +1264,21 @@ function drawPosterCanyon()
 // Functions for game startup screen, game over screen
 // and level completed screen
 // ---------------------------------
-function drawStartupScreen()
-{
+function drawStartupScreen() {
 	drawGamePoster();
 	// Drawing text box
 	fill(0, 0, 0, 200);
 	rect(320, 425, 390, 80);
 	stroke(255);
 	// Adding text
-	if ((Math.ceil(frameCount / 30)) % 2 == 0)
-	{
+	if ((Math.ceil(frameCount / 30)) % 2 == 0) {
 		text("Press any key to Start", 390, 470);
 	}
 	return;
 }
 
 
-function drawGameOverScreen()
-{
+function drawGameOverScreen() {
 	// Draw Game Over screen
 	drawGamePoster();
 	fill(255, 0, 0, 50);
@@ -1395,8 +1293,7 @@ function drawGameOverScreen()
 }
 
 
-function drawLevelCompleteScreen()
-{
+function drawLevelCompleteScreen() {
 	// Draw Game Over screen
 	drawGamePoster();
 	fill(0, 255, 0, 20);
@@ -1414,8 +1311,7 @@ function drawLevelCompleteScreen()
 // ---------------------------------
 // Start game function
 // ---------------------------------
-function startGame()
-{
+function startGame() {
 	floorPos_y = height * 3 / 4;
 	gameChar_x = width / 2;
 	gameChar_y = floorPos_y;
@@ -1433,10 +1329,12 @@ function startGame()
 	isFalling = false;
 	isPlummeting = false;
 	levelComplete = false;
+	fireworks = [];
+	fireworksEndedCount = 0;
 
 	// Initialise array - trees.
 	trees_x = [400, 1400, 1550, 1700, 2500, 3100, 3250, 3975,
-	4125, 4900, 6450, 6600];
+		4125, 4900, 6450, 6600];
 
 	// Arrays for drawing grass.
 	grassWidths = [25, 25, 30, 20, 15, 30, 22, 21, 24, 31];
@@ -1445,133 +1343,132 @@ function startGame()
 	// Initialise array - clouds.
 	clouds =
 		[
-			{x_pos: 150, y_pos: 200, size: 0.6, speed: -0.5},
-			{x_pos: 550, y_pos: 155, size: 1.1, speed: 0.6},
-			{x_pos: 800, y_pos: 100, size: 1, speed: -0.75},
-			{x_pos: 1100, y_pos: 210, size: 0.7, speed: 0.68},
-			{x_pos: 1350, y_pos: 170, size: 1, speed: 0.8},
-			{x_pos: 1800, y_pos: 110, size: 0.9, speed: -0.98},
-			{x_pos: 2000, y_pos: 150, size: 1, speed: 0.45},
-			{x_pos: 2500, y_pos: 120, size: 0.6, speed: -0.6},
-			{x_pos: 2950, y_pos: 200, size: 0.8, speed: -0.78},
-			{x_pos: 3250, y_pos: 170, size: 1, speed: -0.55},
-			{x_pos: 3470, y_pos: 100, size: 0.5, speed: 0.64},
-			{x_pos: 3790, y_pos: 175, size: 0.65, speed: 0.97},
-			{x_pos: 4175, y_pos: 95, size: 0.9, speed: -0.85},
-			{x_pos: 4400, y_pos: 145, size: 0.6, speed: -0.59},
-			{x_pos: 4500, y_pos: 155, size: 0.3, speed: 0.781},
-			{x_pos: 4900, y_pos: 210, size: 0.7, speed: -0.669},
-			{x_pos: 5007, y_pos: 170, size: 1, speed: 0.775},
-			{x_pos: 5320, y_pos: 80, size: 0.9, speed: 0.86},
-			{x_pos: 5820, y_pos: 120, size: 0.6, speed: 0.698},
-			{x_pos: 6017, y_pos: 200, size: 0.8, speed: -0.94},
-			{x_pos: 6197, y_pos: 100, size: 0.5, speed: -0.47},
-			{x_pos: 6477, y_pos: 175, size: 0.65, speed: 0.619},
-			{x_pos: 6752, y_pos: 155, size: 0.3, speed: -0.5798},
-			{x_pos: 6960, y_pos: 95, size: 0.9, speed: -0.6254},
-			{x_pos: 7050, y_pos: 100, size: 0.5, speed: 0.5987}
+			{ x_pos: 150, y_pos: 200, size: 0.6, speed: -0.5 },
+			{ x_pos: 550, y_pos: 155, size: 1.1, speed: 0.6 },
+			{ x_pos: 800, y_pos: 100, size: 1, speed: -0.75 },
+			{ x_pos: 1100, y_pos: 210, size: 0.7, speed: 0.68 },
+			{ x_pos: 1350, y_pos: 170, size: 1, speed: 0.8 },
+			{ x_pos: 1800, y_pos: 110, size: 0.9, speed: -0.98 },
+			{ x_pos: 2000, y_pos: 150, size: 1, speed: 0.45 },
+			{ x_pos: 2500, y_pos: 120, size: 0.6, speed: -0.6 },
+			{ x_pos: 2950, y_pos: 200, size: 0.8, speed: -0.78 },
+			{ x_pos: 3250, y_pos: 170, size: 1, speed: -0.55 },
+			{ x_pos: 3470, y_pos: 100, size: 0.5, speed: 0.64 },
+			{ x_pos: 3790, y_pos: 175, size: 0.65, speed: 0.97 },
+			{ x_pos: 4175, y_pos: 95, size: 0.9, speed: -0.85 },
+			{ x_pos: 4400, y_pos: 145, size: 0.6, speed: -0.59 },
+			{ x_pos: 4500, y_pos: 155, size: 0.3, speed: 0.781 },
+			{ x_pos: 4900, y_pos: 210, size: 0.7, speed: -0.669 },
+			{ x_pos: 5007, y_pos: 170, size: 1, speed: 0.775 },
+			{ x_pos: 5320, y_pos: 80, size: 0.9, speed: 0.86 },
+			{ x_pos: 5820, y_pos: 120, size: 0.6, speed: 0.698 },
+			{ x_pos: 6017, y_pos: 200, size: 0.8, speed: -0.94 },
+			{ x_pos: 6197, y_pos: 100, size: 0.5, speed: -0.47 },
+			{ x_pos: 6477, y_pos: 175, size: 0.65, speed: 0.619 },
+			{ x_pos: 6752, y_pos: 155, size: 0.3, speed: -0.5798 },
+			{ x_pos: 6960, y_pos: 95, size: 0.9, speed: -0.6254 },
+			{ x_pos: 7050, y_pos: 100, size: 0.5, speed: 0.5987 }
 		];
 
 	// Initialise array - mountains.
 	backMountains =
 		[
-			{x_pos: 170, y_pos: 432, size: 1},
-			{x_pos: 100, y_pos: 432, size: 0.6},
-			{x_pos: 900, y_pos: 432, size: 0.8},
-			{x_pos: 980, y_pos: 432, size: 1},
-			{x_pos: 1200, y_pos: 432, size: 0.5},
-			{x_pos: 1700, y_pos: 432, size: 1.2},
-			{x_pos: 2600, y_pos: 432, size: 1.1},
-			{x_pos: 2800, y_pos: 432, size: 0.7},
-			{x_pos: 3350, y_pos: 432, size: 0.6},
-			{x_pos: 3400, y_pos: 432, size: 0.8},
-			{x_pos: 3500, y_pos: 432, size: 0.5}
+			{ x_pos: 170, y_pos: 432, size: 1 },
+			{ x_pos: 100, y_pos: 432, size: 0.6 },
+			{ x_pos: 900, y_pos: 432, size: 0.8 },
+			{ x_pos: 980, y_pos: 432, size: 1 },
+			{ x_pos: 1200, y_pos: 432, size: 0.5 },
+			{ x_pos: 1700, y_pos: 432, size: 1.2 },
+			{ x_pos: 2600, y_pos: 432, size: 1.1 },
+			{ x_pos: 2800, y_pos: 432, size: 0.7 },
+			{ x_pos: 3350, y_pos: 432, size: 0.6 },
+			{ x_pos: 3400, y_pos: 432, size: 0.8 },
+			{ x_pos: 3500, y_pos: 432, size: 0.5 }
 		];
 
 	middleMountains =
 		[
-			{x_pos: 450, y_pos: 432, size: 0.6},
-			{x_pos: 880, y_pos: 432, size: 0.4},
-			{x_pos: 1680, y_pos: 432, size: 0.9},
-			{x_pos: 2980, y_pos: 432, size: 0.9},
-			{x_pos: 3980, y_pos: 432, size: 1}
+			{ x_pos: 450, y_pos: 432, size: 0.6 },
+			{ x_pos: 880, y_pos: 432, size: 0.4 },
+			{ x_pos: 1680, y_pos: 432, size: 0.9 },
+			{ x_pos: 2980, y_pos: 432, size: 0.9 },
+			{ x_pos: 3980, y_pos: 432, size: 1 }
 		];
 
 	frontMountains =
 		[
-			{x_pos: 600, y_pos: 432, size: 1},
-			{x_pos: 1750, y_pos: 432, size: 0.8},
-			{x_pos: 1950, y_pos: 432, size: 0.4},
-			{x_pos: 3450, y_pos: 432, size: 0.7},
-			{x_pos: 3750, y_pos: 432, size: 0.4},
-			{x_pos: 4700, y_pos: 432, size: 0.8}
+			{ x_pos: 600, y_pos: 432, size: 1 },
+			{ x_pos: 1750, y_pos: 432, size: 0.8 },
+			{ x_pos: 1950, y_pos: 432, size: 0.4 },
+			{ x_pos: 3450, y_pos: 432, size: 0.7 },
+			{ x_pos: 3750, y_pos: 432, size: 0.4 },
+			{ x_pos: 4700, y_pos: 432, size: 0.8 }
 		];
 
 	// Initialise array - collectables.
 	collectables =
 		[
-			{x_pos: 190, y_pos: 380, size: 1.2, isFound: false},
-			{x_pos: 250, y_pos: 380, size: 1.2, isFound: false},
-			{x_pos: 750, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 810, y_pos: 290, size: 1.5, isFound: false},
-			{x_pos: 870, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 1260, y_pos: 360, size: 1.4, isFound: false},
-			{x_pos: 1910, y_pos: 360, size: 1.2, isFound: false},
-			{x_pos: 1970, y_pos: 340, size: 1.5, isFound: false},
-			{x_pos: 2030, y_pos: 360, size: 1.2, isFound: false},
+			{ x_pos: 190, y_pos: 380, size: 1.2, isFound: false },
+			{ x_pos: 250, y_pos: 380, size: 1.2, isFound: false },
+			{ x_pos: 750, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 810, y_pos: 290, size: 1.5, isFound: false },
+			{ x_pos: 870, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 1260, y_pos: 360, size: 1.4, isFound: false },
+			{ x_pos: 1910, y_pos: 360, size: 1.2, isFound: false },
+			{ x_pos: 1970, y_pos: 340, size: 1.5, isFound: false },
+			{ x_pos: 2030, y_pos: 360, size: 1.2, isFound: false },
 
-			{x_pos: 2570, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2630, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2690, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2750, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2810, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2870, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 2930, y_pos: 300, size: 1.2, isFound: false},
+			{ x_pos: 2570, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2630, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2690, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2750, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2810, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2870, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 2930, y_pos: 300, size: 1.2, isFound: false },
 
-			{x_pos: 3430, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 3490, y_pos: 300, size: 1.4, isFound: false},
-			{x_pos: 3550, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 3610, y_pos: 300, size: 1.4, isFound: false},
-			{x_pos: 3670, y_pos: 300, size: 1.2, isFound: false},
-			{x_pos: 3730, y_pos: 300, size: 1.4, isFound: false},
-			{x_pos: 3790, y_pos: 300, size: 1.2, isFound: false},
+			{ x_pos: 3430, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 3490, y_pos: 300, size: 1.4, isFound: false },
+			{ x_pos: 3550, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 3610, y_pos: 300, size: 1.4, isFound: false },
+			{ x_pos: 3670, y_pos: 300, size: 1.2, isFound: false },
+			{ x_pos: 3730, y_pos: 300, size: 1.4, isFound: false },
+			{ x_pos: 3790, y_pos: 300, size: 1.2, isFound: false },
 
-			{x_pos: 4260, y_pos: 360, size: 1.2, isFound: false},
-			{x_pos: 4850, y_pos: 380, size: 1.2, isFound: false},
-			{x_pos: 4910, y_pos: 380, size: 1.2, isFound: false},
-			{x_pos: 4970, y_pos: 380, size: 1.2, isFound: false},
+			{ x_pos: 4260, y_pos: 360, size: 1.2, isFound: false },
+			{ x_pos: 4850, y_pos: 380, size: 1.2, isFound: false },
+			{ x_pos: 4910, y_pos: 380, size: 1.2, isFound: false },
+			{ x_pos: 4970, y_pos: 380, size: 1.2, isFound: false },
 
-			{x_pos: 5370, y_pos: 310, size: 1.2, isFound: false},
-			{x_pos: 5430, y_pos: 310, size: 1.2, isFound: false},
-			{x_pos: 5490, y_pos: 310, size: 1.2, isFound: false},
+			{ x_pos: 5370, y_pos: 310, size: 1.2, isFound: false },
+			{ x_pos: 5430, y_pos: 310, size: 1.2, isFound: false },
+			{ x_pos: 5490, y_pos: 310, size: 1.2, isFound: false },
 
-			{x_pos: 5525, y_pos: 230, size: 1.2, isFound: false},
-			{x_pos: 5585, y_pos: 230, size: 1.2, isFound: false},
-			{x_pos: 5645, y_pos: 230, size: 1.2, isFound: false},
-			{x_pos: 5820, y_pos: 230, size: 1.2, isFound: false},
-			{x_pos: 5900, y_pos: 230, size: 1.2, isFound: false},
+			{ x_pos: 5525, y_pos: 230, size: 1.2, isFound: false },
+			{ x_pos: 5585, y_pos: 230, size: 1.2, isFound: false },
+			{ x_pos: 5645, y_pos: 230, size: 1.2, isFound: false },
+			{ x_pos: 5820, y_pos: 230, size: 1.2, isFound: false },
+			{ x_pos: 5900, y_pos: 230, size: 1.2, isFound: false },
 
-			{x_pos: 5820, y_pos: 350, size: 1.2, isFound: false},
-			{x_pos: 5900, y_pos: 350, size: 1.2, isFound: false},
-			{x_pos: 5980, y_pos: 350, size: 1.2, isFound: false},
+			{ x_pos: 5820, y_pos: 350, size: 1.2, isFound: false },
+			{ x_pos: 5900, y_pos: 350, size: 1.2, isFound: false },
+			{ x_pos: 5980, y_pos: 350, size: 1.2, isFound: false },
 		];
 
 	// Array for deciding x position of bubbles in canyon
 	bubbleX = [];
-	for (var i = 0; i <= 100; i++)
-	{
+	for (var i = 0; i <= 100; i++) {
 		bubbleX.push(Math.random());
 	}
 
 	// Initialise array - canyons.
 	canyons =
 		[
-			{x_pos: -450, width: 550},
-			{x_pos: 1200, width: 120},
-			{x_pos: 1900, width: 150},
-			{x_pos: 3480, width: 450},
-			{x_pos: 4200, width: 120},
-			{x_pos: 5400, width: 500}
+			{ x_pos: -450, width: 550 },
+			{ x_pos: 1200, width: 120 },
+			{ x_pos: 1900, width: 150 },
+			{ x_pos: 3480, width: 450 },
+			{ x_pos: 4200, width: 120 },
+			{ x_pos: 5400, width: 500 }
 		];
 
 	// Add platforms
@@ -1594,7 +1491,7 @@ function startGame()
 	enemies.push(new Enemy(5650, floorPos_y - 180, 100));
 
 	game_score = 0;
-	flagpole = {isReached: false, x_pos: 6800, y_pos: floorPos_y, height: 250};
-	flag = {x_pos: flagpole.x_pos, y_pos: flagpole.y_pos - 50};
+	flagpole = { isReached: false, x_pos: 6800, y_pos: floorPos_y, height: 250 };
+	flag = { x_pos: flagpole.x_pos, y_pos: flagpole.y_pos - 50 };
 }
 
