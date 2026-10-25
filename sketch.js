@@ -24,6 +24,8 @@ var backgroundMusic;
 var gameOverSound;
 var levelCompletedSound;
 var gameEndSoundPlayed;
+var fireworksSound;
+var fireworksSoundPlayed;
 
 var trees_x;
 var clouds;
@@ -69,6 +71,8 @@ function preload() {
 	gameOverSound.setVolume(0.1);
 	levelCompletedSound = loadSound('assets/levelcomplete.wav');
 	levelCompletedSound.setVolume(0.5);
+	fireworksSound = loadSound('assets/fireworks.wav');
+	fireworksSound.setVolume(0.5);
 }
 
 
@@ -79,6 +83,7 @@ function setup() {
 	startedPlaying = false;
 	lives = 3;
 	gameEndSoundPlayed = false;
+	fireworksSoundPlayed = false;
 	gravity = createVector(0, 0.2);
 	startGame();
 }
@@ -159,7 +164,7 @@ function draw() {
 	// Draw game character.
 	drawGameChar();
 
-	// Draw collectable to show game score
+	// Draw collectable icon to show game score
 	drawCollectable({ x_pos: 50, y_pos: 50, size: 1.2, isFound: false });
 	// Draw game score text on screen
 	fill(255);
@@ -276,7 +281,15 @@ function draw() {
 		else {
 			// Draw raised flag
 			flag.y_pos = flagpole.y_pos - flagpole.height;
-			levelComplete = true;
+
+			if (!fireworksSoundPlayed) {
+				fireworksSoundPlayed = true;
+				levelComplete = true;
+
+				if (fireworksSound.isLoaded()) {
+					fireworksSound.play();
+				}
+			}
 		}
 	}
 
@@ -1329,6 +1342,7 @@ function startGame() {
 	isFalling = false;
 	isPlummeting = false;
 	levelComplete = false;
+	fireworksSoundPlayed = false;
 	fireworks = [];
 	fireworksEndedCount = 0;
 
