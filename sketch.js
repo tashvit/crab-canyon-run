@@ -54,6 +54,7 @@ var fireworksEndedCount = 0;
 var gravity;
 
 var gameFont;
+var collectableScoreFont;
 
 
 function preload() {
@@ -75,8 +76,9 @@ function preload() {
 	levelCompletedSound.setVolume(0.5);
 	fireworksSound = loadSound('assets/fireworks.wav');
 	fireworksSound.setVolume(0.5);
-	// Load font
+	// Load fonts
 	gameFont = loadFont('assets/fonts/Fredoka-Bold.ttf');
+	collectableScoreFont = loadFont('assets/fonts/Fredoka-Regular.ttf');
 }
 
 
@@ -171,18 +173,14 @@ function draw() {
 	// Draw collectable icon to show game score
 	drawCollectable({ x_pos: 50, y_pos: 50, size: 1.2, isFound: false });
 	// Draw game score text on screen
-	if (gameFont) {
-		textFont(gameFont);
+	if (collectableScoreFont) {
+		textFont(collectableScoreFont);
 	}
 	fill(255);
-	//noStroke();
-	//stroke(103, 115, 131);
-	//stroke(240, 181, 92);
 	stroke(238, 221, 96);
 	strokeWeight(3);
 	textSize(27);
 	text("x " + game_score, 80, 60);
-	textSize(25);
 	noStroke();
 
 	// Draw life tokens for lives remaining
