@@ -53,6 +53,8 @@ var fireworks = [];
 var fireworksEndedCount = 0;
 var gravity;
 
+var gameFont;
+
 
 function preload() {
 	soundFormats('wav');
@@ -73,6 +75,8 @@ function preload() {
 	levelCompletedSound.setVolume(0.5);
 	fireworksSound = loadSound('assets/fireworks.wav');
 	fireworksSound.setVolume(0.5);
+	// Load font
+	gameFont = loadFont('assets/fonts/Fredoka-Bold.ttf');
 }
 
 
@@ -167,11 +171,19 @@ function draw() {
 	// Draw collectable icon to show game score
 	drawCollectable({ x_pos: 50, y_pos: 50, size: 1.2, isFound: false });
 	// Draw game score text on screen
+	if (gameFont) {
+		textFont(gameFont);
+	}
 	fill(255);
-	noStroke();
-	textSize(25);
+	//noStroke();
+	//stroke(103, 115, 131);
+	//stroke(240, 181, 92);
+	stroke(238, 221, 96);
+	strokeWeight(3);
+	textSize(27);
 	text("x " + game_score, 80, 60);
 	textSize(25);
+	noStroke();
 
 	// Draw life tokens for lives remaining
 	for (var i = 0; i < lives; i++) {
@@ -1282,10 +1294,16 @@ function drawStartupScreen() {
 	// Drawing text box
 	fill(0, 0, 0, 200);
 	rect(320, 425, 390, 80);
+
+	// Set font
+	if (gameFont) {
+		textFont(gameFont);
+	}
+	textSize(30);
 	stroke(255);
 	// Adding text
 	if ((Math.ceil(frameCount / 30)) % 2 == 0) {
-		text("Press any key to Start", 390, 470);
+		text("Press  any  key  to  Start", 352, 470);
 	}
 	return;
 }
@@ -1299,9 +1317,15 @@ function drawGameOverScreen() {
 	// Game Over text
 	fill(0, 0, 0, 200);
 	rect(320, 425, 390, 80);
+
+	// Set font
+	if (gameFont) {
+		textFont(gameFont);
+	}
+	textSize(28);
 	stroke(255);
-	text("Game Over!", 440, 460);
-	text("Press space to continue", 380, 490);
+	text("Game  Over!", 440, 460);
+	text("Press  space  to  continue", 360, 490);
 	return;
 }
 
@@ -1314,9 +1338,15 @@ function drawLevelCompleteScreen() {
 	// Level Complete text
 	fill(0, 0, 0, 200);
 	rect(320, 425, 390, 80);
+
+	// Set font
+	if (gameFont) {
+		textFont(gameFont);
+	}
+	textSize(28);
 	stroke(255);
-	text("Level Complete!", 440, 460);
-	text("Press space to continue", 380, 490);
+	text("Level  Complete!", 420, 460);
+	text("Press  space  to  continue", 360, 490);
 	return;
 }
 
@@ -1508,4 +1538,3 @@ function startGame() {
 	flagpole = { isReached: false, x_pos: 6800, y_pos: floorPos_y, height: 250 };
 	flag = { x_pos: flagpole.x_pos, y_pos: flagpole.y_pos - 50 };
 }
-
